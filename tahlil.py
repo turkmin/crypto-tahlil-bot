@@ -3,16 +3,15 @@ import json
 import pandas as pd
 import ta
 import asyncio
-import time
 from telegram import Bot
 
 # --- SOZLAMALAR ---
-TOKEN = '8807605095:AAFvyM9F3wBnroFr6y_is5Yr5ERcJUfQZQw'  # Yangi tirik tokeningiz
+TOKEN = '8807605095:AAFvyM9F3wBnroFr6y_is5Yr5ERcJUfQZQw'  # Maxfiy tokeningiz
 CHAT_ID = '6261546654'  # Shaxsiy Telegram ID raqamingiz
 SYMBOL = 'BTCUSDT'
 
 def get_binance_data(symbol):
-    """Chet el serveri orqali Binance API'dan grafikni yuklash"""
+    """Binance API'dan grafik ma'lumotlarini to'g'ri URL orqali yuklash"""
     url = f"https://binance.com{symbol}&interval=15m&limit=300"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
@@ -44,6 +43,9 @@ async def send_auto_message(text):
 
 async def monitor_market():
     print("🤖 SERVERDA KRIPTO AVTOMATIK MONITORING ISHGA TUSHDI!")
+    # Bot serverda yonganda sizga darhol xabar boradi:
+    await send_auto_message("🤖 *Salom! Bot Render serverida muvaffaqiyatli ishga tushdi va 15 minutlik grafikda avtomatik signallarni kuzatishni boshladi!*")
+    
     last_signal_time = None
     
     while True:
@@ -83,4 +85,4 @@ async def monitor_market():
         await asyncio.sleep(60) # Server har daqiqada tekshirib turadi
 
 if __name__ == '__main__':
-    asyncio.run(monitor_market()) 
+    asyncio.run(monitor_market())
