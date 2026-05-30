@@ -7,7 +7,7 @@ from telegram import Bot
 
 # --- SOZLAMALAR ---
 TOKEN = '8807605095:AAFvyM9F3wBnroFr6y_is5Yr5ERcJUfQZQw'  # Maxfiy tokeningiz
-CHAT_ID = '6261546654'  # Shaxsiy Telegram ID raqamingiz
+CHAT_ID = '5798244980'  # Sizning to'g'ri Telegram ID raqamingiz 🚀
 SYMBOL = 'BTCUSDT'
 
 def get_binance_data(symbol):
