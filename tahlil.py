@@ -49,20 +49,23 @@ def calculate_indicators(df):
     return df
 
 def send_telegram_message(text):
+    """Telegram API ga xavfsiz va bloklanmaydigan so'rov yuborish"""
     url = f"https://telegram.org{TOKEN}/sendMessage"
     payload = json.dumps({"chat_id": CHAT_ID, "text": text, "parse_mode": "Markdown"})
-    headers = {'Content-Type': 'application/json'}
+    headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
     req = urllib.request.Request(url, data=payload.encode('utf-8'), headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=6) as response:
             pass
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Telegram yuborish xatosi: {e}", flush=True)
 
 @app.route('/')
 def home():
-    # Cron-job kelganda har safar shu yer ishlaydi va Render majburiy ravishda loglarni ko'rsatadi
-    print("🔄 [CRON PING] Cron-job saytidan so'rov keldi. TOP-100 skanerlash boshlandi...", flush=True)
+    print("🔄 [CRON PING] Skanerlash jarayoni boshlandi...", flush=True)
     
     for symbol in SYMBOLS:
         df = get_binance_data(symbol)
@@ -97,9 +100,10 @@ def home():
                 send_telegram_message(msg)
                 LAST_SIGNAL_TIMES[symbol] = candle_time
 
-    print("✅ [FINISH] 100 ta tanga skanerlab bo'lindi.", flush=True)
+    print("✅ [FINISH] Skanerlash muvaffaqiyatli yakunlandi.", flush=True)
     return "Skaner faol ishladi!"
 
 if __name__ == '__main__':
-    send_telegram_message("🤖 *Skaner tizimi Cron-job kombinatsiyasi bilan muvaffaqiyatli o'rnatildi!* Endi har 15 daqiqada tahlillar boshlanadi.")
+    # Server yoqilishi bilan darhol sinov xabari ketadi
+    send_telegram_message("🤖 *Skaner tizimi xavfsiz rejimda to'liq ishga tushdi!* Har 15 daqiqada bozorni skanerlash davom etadi.")
     app.run(host='0.0.0.0', port=10000)
