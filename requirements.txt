@@ -1,3 +1,4 @@
 pandas
 ta
 python-telegram-bot
+Flask
