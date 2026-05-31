@@ -4,14 +4,29 @@ import pandas as pd
 import ta
 import asyncio
 from telegram import Bot
+from flask import Flask
+from threading import Thread
+
+# --- FLOOD PREVENT VEB SERVER ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot tirik!"
+
+def run():
+    app.run(host='0.0.0.0', port=10000)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
 
 # --- SOZLAMALAR ---
-TOKEN = '8807605095:AAFvyM9F3wBnroFr6y_is5Yr5ERcJUfQZQw'  # Maxfiy tokeningiz
-CHAT_ID = '5798244980'  # Sizning to'g'ri Telegram ID raqamingiz 🚀
+TOKEN = '8807605095:AAFvyM9F3wBnroFr6y_is5Yr5ERcJUfQZQw'
+CHAT_ID = '5798244980'
 SYMBOL = 'BTCUSDT'
 
 def get_binance_data(symbol):
-    """Binance API'dan grafik ma'lumotlarini to'g'ri URL orqali yuklash"""
     url = f"https://binance.com{symbol}&interval=15m&limit=300"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
@@ -43,7 +58,6 @@ async def send_auto_message(text):
 
 async def monitor_market():
     print("🤖 SERVERDA KRIPTO AVTOMATIK MONITORING ISHGA TUSHDI!")
-    # Bot serverda yonganda sizga darhol xabar boradi:
     await send_auto_message("🤖 *Salom! Bot Render serverida muvaffaqiyatli ishga tushdi va 15 minutlik grafikda avtomatik signallarni kuzatishni boshladi!*")
     
     last_signal_time = None
@@ -82,7 +96,8 @@ async def monitor_market():
                 await send_auto_message(msg)
                 last_signal_time = candle_time
 
-        await asyncio.sleep(60) # Server har daqiqada tekshirib turadi
+        await asyncio.sleep(60)
 
 if __name__ == '__main__':
+    keep_alive() # Port ochish funksiyasi ishga tushadi
     asyncio.run(monitor_market())
