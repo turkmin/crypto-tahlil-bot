@@ -5,27 +5,18 @@ import ta
 import asyncio
 from telegram import Bot
 from flask import Flask
-from threading import Thread
+import threading
 
-# --- FLOOD PREVENT VEB SERVER ---
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "100 Tanga Skaneri Tirik!"
-
-def run():
-    app.run(host='0.0.0.0', port=10000)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
+    return "100 Tanga Skaneri 10x Faol!"
 
 # --- SOZLAMALAR ---
 TOKEN = '8807605095:AAFvyM9F3wBnroFr6y_is5Yr5ERcJUfQZQw'
 CHAT_ID = '5798244980'
 
-# BINANCE TOP-100 LIKVIDLI PARALAR RO'YXATI
 SYMBOLS = [
     'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'DOGEUSDT', 'LINKUSDT',
     'MATICUSDT', 'SHIBUSDT', 'LTCUSDT', 'TRXUSDT', 'NEARUSDT', 'FILUSDT', 'UNIUSDT', 'ATOMUSDT', 'OPUSDT', 'APTUSDT',
@@ -43,7 +34,7 @@ def get_binance_data(symbol):
     url = f"https://binance.com{symbol}&interval=15m&limit=300"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=8) as response:
             data = json.loads(response.read().decode())
             df = pd.DataFrame(data, columns=['time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'qav', 'num_trades', 'taker_base', 'taker_quote', 'ignore'])
             df['close'] = df['close'].astype(float)
@@ -51,7 +42,6 @@ def get_binance_data(symbol):
             df['low'] = df['low'].astype(float)
             return df
     except Exception:
-        # 100 ta para bo'lgani uchun konsolni to'ldirmaslik maqsadida xatolar yashirildi
         return None
 
 def calculate_indicators(df):
@@ -67,7 +57,7 @@ async def send_auto_message(text):
         bot = Bot(token=TOKEN)
         await bot.send_message(chat_id=CHAT_ID, text=text, parse_mode='Markdown')
     except Exception as e:
-        print(f"Telegram xatosi: {e}")
+        print(f"!!! Telegram yuborish xatosi: {e}")
 
 async def process_symbol(symbol, last_signal_times):
     df = get_binance_data(symbol)
@@ -84,45 +74,56 @@ async def process_symbol(symbol, last_signal_times):
         if pd.isna(rsi) or pd.isna(ema):
             return
 
+        print(f"📊 [CHECK] -> {symbol} | Narx: ${price:.4f} | RSI: {rsi:.2f}", flush=True)
+
+        # 10x Richag uchun matematika (Spotda 1.5% va 0.6%)
         long_tp, long_sl = price * 1.015, price * 0.994
         short_tp, short_sl = price * 0.985, price * 1.006
 
-        is_long = (price > ema) and (rsi < 38) and (prev_row['macd'] < prev_row['macd_signal']) and (last_row['macd'] > last_row['macd_signal'])
-        is_short = (price < ema) and (rsi > 62) and (prev_row['macd'] > prev_row['macd_signal']) and (last_row['macd'] < last_row['macd_signal'])
+        is_long = (price > ema) and (rsi < 43) and (prev_row['macd'] < prev_row['macd_signal']) and (last_row['macd'] > last_row['macd_signal'])
+        is_short = (price < ema) and (rsi > 57) and (prev_row['macd'] > prev_row['macd_signal']) and (last_row['macd'] < last_row['macd_signal'])
 
         if (is_long or is_short) and (last_signal_times.get(symbol) != candle_time):
-            msg = f"🚀 *YANGI 100-SKANER SIGNALI!* 🚀\n\n"
+            msg = f"🚀 *YANGI 10x FYUCHES SIGNALI!* 🚀\n\n"
             msg += f"🪙 *Tanga: {symbol}*\n"
-            msg += f"💰 Narx: ${price:,.4f}\n📉 RSI: {rsi:.2f}\n\n"
+            msg += f"⚙️ *Leverage: 10x*\n"
+            msg += f"💰 Kirish narxi: ${price:,.4f}\n📉 RSI: {rsi:.2f}\n\n"
             
             if is_long:
                 msg += "🟢 *YO'NALISH: LONG (SOTIB OLISH)* 🟢\n\n"
-                msg += f"🎯 Target (TP): ${long_tp:,.4f}\n🛑 Stop Loss (SL): ${long_sl:,.2f}\n"
+                msg += f"🎯 Target (TP +15%): ${long_tp:,.4f}\n🛑 Stop Loss (SL -6%): ${long_sl:,.4f}\n"
             elif is_short:
                 msg += "🔴 *YO'NALISH: SHORT (SOTISH)* 🔴\n\n"
-                msg += f"🎯 Target (TP): ${short_tp:,.2f}\n🛑 Stop Loss (SL): ${short_sl:,.2f}\n"
+                msg += f"🎯 Target (TP +15%): ${short_tp:,.4f}\n🛑 Stop Loss (SL -6%): ${short_sl:,.2f}\n"
             
+            msg += f"\n📊 *Risk va Foyda:* Siz yutqazsangiz $12, yutsangiz $30 olasiz ($200 balans bilan)."
             await send_auto_message(msg)
             last_signal_times[symbol] = candle_time
 
 async def monitor_market():
-    print("🤖 SERVERDA 100 TA PARA UCHUN SKANER ISHGA TUSHDI!")
-    await send_auto_message("🚀 *Salom! TOP-100 kripto paralar uchun avtomatik MULTI-SKANER bot Render'da ishga tushdi!* Bozordagi barcha imkoniyatlar kuzatilmoqda.")
+    print("🚀 100 TA PARA VA 10X RICHAGLI MONITORING ISHGA TUSHDI! 🚀", flush=True)
+    await send_auto_message("⚙️ *TOP-100 Skaner 10x fyuches standartlari bilan qayta yuklandi!* Filtr yumshatildi (43/57). Jonli narxlar oqimi boshlandi.")
     
     last_signal_times = {symbol: None for symbol in SYMBOLS}
     
     while True:
-        # Binance bloklab qo'ymasligi uchun paralar 10 tadan guruhlarga bo'lib skaner qilinadi
         chunk_size = 10
         for i in range(0, len(SYMBOLS), chunk_size):
             chunk = SYMBOLS[i:i+chunk_size]
             tasks = [process_symbol(symbol, last_signal_times) for symbol in chunk]
             await asyncio.gather(*tasks)
-            await asyncio.sleep(1) # Guruhlar orasida 1 soniya tanaffus
+            await asyncio.sleep(1)
+            
+        print("--- 🔄 100 TA TANGA TO'LIQ SKANERLANDI. KEYINGI AYLANISH ---", flush=True)
+        await asyncio.sleep(45)
 
-        print("🔄 TOP-100 ro'yxat to'liq skanerlandi. Keyingi aylanish 1 daqiqadan so'ng...")
-        await asyncio.sleep(60)
+def start_loop():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(monitor_market())
 
 if __name__ == '__main__':
-    keep_alive()
-    asyncio.run(monitor_market())
+    t = threading.Thread(target=start_loop)
+    t.daemon = True
+    t.start()
+    app.run(host='0.0.0.0', port=10000)
